@@ -12,8 +12,16 @@ enum class EQuestCategory:uint8
 UENUM(BlueprintType)
 enum class EArea:uint8
 {
-	Oba=0 UMETA(DisplayName="Oba"),
-	Antakya=1 UMETA(DisplayName="Antakya")
+	None=0 UMETA(DisplayName="None"),
+	Oba=1 UMETA(DisplayName="Oba"),
+	Antakya=2 UMETA(DisplayName="Antakya")
+};
+
+UENUM(BlueprintType)
+enum class ETaskType:uint8
+{
+	MainTask=0 UMETA(DisplayName="MainTask"),
+	SecondaryTask=1 UMETA(DisplayName="SecondaryTask")
 };
 
 USTRUCT(BlueprintType)
@@ -25,7 +33,7 @@ public:
 	FGameplayTag TaskID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FGameplayTag TaskType;
+	ETaskType TaskType;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FGameplayTag QuestID;

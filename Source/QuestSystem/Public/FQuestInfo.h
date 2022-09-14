@@ -1,11 +1,12 @@
 ﻿#pragma once
 #include "GameplayTagContainer.h"
 #include "QuestStructAndEnumLibrary.h"
+#include "Engine/DataTable.h"
 #include "FQuestInfo.generated.h"
 
 
 USTRUCT(BlueprintType)
-struct FQuestInfo
+struct FQuestInfo:public FTableRowBase
 {
 	GENERATED_BODY()
 public:
@@ -27,7 +28,7 @@ public:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere)
 	TArray<FGameplayTag> RequiredQuests;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite,EditAnywhere)
 	TArray<FQuestRequiredMissions> RequiredMissions;
 	
 };
