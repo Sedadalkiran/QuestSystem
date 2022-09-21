@@ -24,6 +24,15 @@ enum class ETaskType:uint8
 	SecondaryTask=1 UMETA(DisplayName="SecondaryTask")
 };
 
+UENUM(BlueprintType)
+enum class ETaskState:uint8
+{
+	Active=0 UMETA(DisplayName="Active"),
+	Deactive=1 UMETA(DisplayName="Deactive"),
+	Ready=2 UMETA(DisplayName="Ready")
+
+};
+
 USTRUCT(BlueprintType)
 struct FQuestRequiredMissions
 {

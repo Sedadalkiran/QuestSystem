@@ -38,6 +38,29 @@ void UQuestComponent::CompleteQuest()
 }
 
 void UQuestComponent::TakeNewQuest()
+{    Tasks.Empty();
+	
+	if(!QuestDataTable.LoadSynchronous())
+	{
+		return;
+	}
+	
+	FString ContexString=QuestID.ToString();
+
+	FQuestInfo* Row=QuestDataTable.Get()->FindRow<FQuestInfo>(QuestID.GetTagName(),ContexString);
+	FGameplayTag::RequestGameplayTag(QuestID.GetTagName());
+
+	if(Row)
+	{
+		for(auto i:Row->RequiredMissions)
+		{
+			Tasks.Add(i);
+		}
+		
+	}
+}
+
+bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
 {
 	
 }

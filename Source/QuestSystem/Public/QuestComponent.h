@@ -25,20 +25,26 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-	UPROPERTY()
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FGameplayTag CurrentQuestID;
 
-	UPROPERTY()
-	TMap<FGameplayTag,bool> Quests;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	int CurrentQuestNumber=0;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	TArray<FGameplayTag> Quests;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<FQuestRequiredMissions> Tasks;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	FGameplayTag ActiveQuest;
+	
 	UPROPERTY(BlueprintReadWrite,EditDefaultsOnly)
 	TSoftObjectPtr<UDataTable> QuestDataTable;
 
 	UFUNCTION()
-	void CompleteQuest();
+	bool CompleteQuest(FGameplayTag QuestID);
 
 	UFUNCTION()
 	void TakeNewQuest();
