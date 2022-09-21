@@ -32,12 +32,8 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
-void UQuestComponent::CompleteQuest()
-{
-	
-}
 
-void UQuestComponent::TakeNewQuest()
+void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
 {    Tasks.Empty();
 	
 	if(!QuestDataTable.LoadSynchronous())
@@ -62,7 +58,7 @@ void UQuestComponent::TakeNewQuest()
 
 bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
 {
-	
+	return true;
 }
 
 bool UQuestComponent::bIsCompletedTasks()

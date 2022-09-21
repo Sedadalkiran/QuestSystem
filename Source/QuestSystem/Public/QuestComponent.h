@@ -47,7 +47,7 @@ public:
 	bool CompleteQuest(FGameplayTag QuestID);
 
 	UFUNCTION()
-	void TakeNewQuest();
+	void TakeNewQuest(FGameplayTag QuestID);
 	
 	UFUNCTION()
 	bool bIsCompletedTasks();
