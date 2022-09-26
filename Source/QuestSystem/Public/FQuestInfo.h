@@ -29,6 +29,7 @@ public:
 	TArray<FGameplayTag> RequiredQuests;
 
 	UPROPERTY(BlueprintReadWrite,EditAnywhere)
-	TArray<FQuestRequiredMissions> RequiredMissions;
+	TArray<FTaskData> RequiredTasks;
+	
 	
 };

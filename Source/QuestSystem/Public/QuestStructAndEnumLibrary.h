@@ -34,7 +34,7 @@ enum class ETaskState:uint8
 };
 
 USTRUCT(BlueprintType)
-struct FQuestRequiredMissions
+struct FTaskData
 {
 	GENERATED_BODY()
 public:
@@ -48,16 +48,26 @@ public:
 	FGameplayTag QuestID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int RequiredAmount;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FText TaskDescription;
+	
+};
+
+USTRUCT(BlueprintType)
+struct FTaskState
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FTaskData TaskData;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bIsCompleted;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int CurrentAmount;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int RequiredAmount;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FText MissionDescription;
 	
 };
-

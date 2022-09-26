@@ -3,6 +3,8 @@
 
 #include "QuestComponent.h"
 
+#include "IPropertyTable.h"
+
 // Sets default values for this component's properties
 UQuestComponent::UQuestComponent()
 {
@@ -32,28 +34,52 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
+FGameplayTag UQuestComponent::GetCurrentQuestID() const
+{
+	if(!CurrentQuests.IsValidIndex(CurrentQuestIndex))
+	{
+		return FGameplayTag::EmptyTag;
+	}
+	return CurrentQuests[CurrentQuestIndex];
+}
+
+TArray<FTaskState> UQuestComponent::GetCurrentQuestTasks() const
+{
+	return GetRequiredTasksForQuest(GetCurrentQuestID());
+}
+
 
 void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
-{    Tasks.Empty();
+{    
 	
 	if(!QuestDataTable.LoadSynchronous())
 	{
 		return;
 	}
-	
 	FString ContexString=QuestID.ToString();
 
 	FQuestInfo* Row=QuestDataTable.Get()->FindRow<FQuestInfo>(QuestID.GetTagName(),ContexString);
-	FGameplayTag::RequestGameplayTag(QuestID.GetTagName());
-
+	
 	if(Row)
 	{
-		for(auto i:Row->RequiredMissions)
+		//FGameplayTag::RequestGameplayTag(QuestID.GetTagName());
+		CurrentQuestIndex=CurrentQuests.AddUnique(Row->QuestID);
+		
+		TArray<FTaskState>& RequiredTasks=CurrentQuestTasks.FindOrAdd(Row->QuestID);
+		RequiredTasks.Empty();
+		for(const auto& RequiredTask:Row->RequiredTasks)
 		{
-			Tasks.Add(i);
+			FTaskState State;
+			State.TaskData=RequiredTask;
+			RequiredTasks.Add(State);
 		}
 		
 	}
+}
+
+void UQuestComponent::UpdateQuestList()
+{
+	
 }
 
 bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
@@ -66,29 +92,13 @@ bool UQuestComponent::bIsCompletedTasks()
 	return true;
 }
 
-TArray<FQuestRequiredMissions> UQuestComponent::GetRequiredMissions(FGameplayTag QuestID)
+
+
+TArray<FTaskState>  UQuestComponent::GetRequiredTasksForQuest(FGameplayTag QuestID) const
 {
-	if(!QuestDataTable.LoadSynchronous())
-	{
-		Tasks.Empty();
-		return Tasks;
-	}
-
-	Tasks.Empty();
-	FString ContexString=QuestID.ToString();
-
-	FQuestInfo* Row=QuestDataTable.Get()->FindRow<FQuestInfo>(QuestID.GetTagName(),ContexString);
-	FGameplayTag::RequestGameplayTag(QuestID.GetTagName());
-
-	if(Row)
-	{
-		for(auto i:Row->RequiredMissions)
-		{
-			Tasks.Add(i);
-		}
-		
-	}
-	return Tasks;
+	const TArray<FTaskState>* CurrentTasks= CurrentQuestTasks.Find(QuestID);
+	
+	return CurrentTasks ? *CurrentTasks : TArray<FTaskState>{};
 }
 
 
