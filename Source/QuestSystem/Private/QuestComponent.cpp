@@ -43,15 +43,16 @@ FGameplayTag UQuestComponent::GetCurrentQuestID() const
 	return CurrentQuests[CurrentQuestIndex];
 }
 
-TArray<FTaskState> UQuestComponent::GetCurrentQuestTasks() const
+void UQuestComponent::GetCurrentQuestTasks(TArray<FTaskState>& OutTasks)
 {
-	return GetRequiredTasksForQuest(GetCurrentQuestID());
+	TArray<FTaskState> TasksStates;
+	GetRequiredTasksForQuest(GetCurrentQuestID(),TasksStates);
+	OutTasks=TasksStates;
 }
 
 
 void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
 {    
-	
 	if(!QuestDataTable.LoadSynchronous())
 	{
 		return;
@@ -62,17 +63,21 @@ void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
 	
 	if(Row)
 	{
-		//FGameplayTag::RequestGameplayTag(QuestID.GetTagName());
-		CurrentQuestIndex=CurrentQuests.AddUnique(Row->QuestID);
-		
-		TArray<FTaskState>& RequiredTasks=CurrentQuestTasks.FindOrAdd(Row->QuestID);
-		RequiredTasks.Empty();
-		for(const auto& RequiredTask:Row->RequiredTasks)
+		if(IsRequiredQuestsCompletedForQuest(QuestID))
 		{
-			FTaskState State;
-			State.TaskData=RequiredTask;
-			RequiredTasks.Add(State);
+			//FGameplayTag::RequestGameplayTag(QuestID.GetTagName());
+			CurrentQuestIndex=CurrentQuests.AddUnique(Row->QuestID);
+		
+			TArray<FTaskState>& RequiredTasks=CurrentQuestTasks.FindOrAdd(Row->QuestID);
+			RequiredTasks.Empty();
+			for(const auto& RequiredTask:Row->RequiredTasks)
+			{
+				FTaskState State;
+				State.TaskData=RequiredTask;
+				RequiredTasks.Add(State);
+			}
 		}
+		
 		
 	}
 }
@@ -82,23 +87,116 @@ void UQuestComponent::UpdateQuestList()
 	
 }
 
+bool UQuestComponent::CompleteTaskForCurrentQuest(FGameplayTag TaskID)
+{
+	return SetTaskCompletedForQuest(GetCurrentQuestID(), TaskID, true);;
+}
+
 bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
 {
-	return true;
+	bool bCompletedAllQuestTasks=false;
+	TArray<FTaskState> TaskStates;
+	GetRequiredTasksForQuest(QuestID,TaskStates);
+	for (auto TaskState : TaskStates)
+	{
+		bCompletedAllQuestTasks=TaskState.bIsCompleted;
+		if (!bCompletedAllQuestTasks)
+		{
+			return bCompletedAllQuestTasks;
+		}
+	}
+	return bCompletedAllQuestTasks;
 }
 
-bool UQuestComponent::bIsCompletedTasks()
+int32 UQuestComponent::GetCurrentTaskRequirements(FGameplayTag TaskID)
 {
-	return true;
-}
+	if(!QuestDataTable.LoadSynchronous())
+    	{
+    		return -1;
+    	}
+	FString ContexString=GetCurrentQuestID().ToString();
 
 
-
-TArray<FTaskState>  UQuestComponent::GetRequiredTasksForQuest(FGameplayTag QuestID) const
-{
-	const TArray<FTaskState>* CurrentTasks= CurrentQuestTasks.Find(QuestID);
+	FQuestInfo* Row = QuestDataTable.Get()->FindRow<FQuestInfo>(GetCurrentQuestID().GetTagName(),ContexString);
 	
-	return CurrentTasks ? *CurrentTasks : TArray<FTaskState>{};
+	if(Row)
+	{
+		TArray<FTaskData>& Tasks = Row->RequiredTasks;
+		for (const auto& Task : Tasks)
+		{
+			if(Task.TaskID == TaskID)
+			{
+				return Task.RequiredAmount;
+			}
+		}
+	}
+	return -1;
+}
+
+
+bool UQuestComponent::GetRequiredTasksForQuest(FGameplayTag QuestID, TArray<FTaskState>& OutTasks)
+{
+	TArray<FTaskState>* TaskStates = CurrentQuestTasks.Find(QuestID);
+    if(TaskStates)
+    {
+     	OutTasks = *TaskStates;
+    	return true;
+    }
+	return false;
+}
+
+bool UQuestComponent::SetTaskCompletedForQuest(FGameplayTag QuestID, FGameplayTag TaskID, bool bCompleted)
+{
+	TArray<FTaskState>* TaskStates = CurrentQuestTasks.Find(QuestID);
+	if (TaskStates)
+	{
+		for (FTaskState& TaskState : *TaskStates)
+		{
+			if (TaskState.TaskData.TaskID == TaskID)
+			{
+				TaskState.bIsCompleted = bCompleted;
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool UQuestComponent::IsRequiredQuestsCompletedForQuest(FGameplayTag QuestID)
+{
+	bool bIsCompletedRequiredQuests=false;
+	
+	if(!QuestDataTable.LoadSynchronous())
+	{
+		return false;
+	}
+	FString ContexString=QuestID.ToString();
+
+	FQuestInfo* Row=QuestDataTable.Get()->FindRow<FQuestInfo>(QuestID.GetTagName(),ContexString);
+	
+	if(Row)
+	{
+		if(Row->RequiredQuests.IsEmpty())
+		{
+			bIsCompletedRequiredQuests=true;
+		}
+		else
+		{
+			TArray<FGameplayTag> RequiredQuest=Row->RequiredQuests;
+			for (auto Quest : RequiredQuest)
+			{
+				bIsCompletedRequiredQuests=FinishedQuests.Contains(Quest);
+				if(!bIsCompletedRequiredQuests)
+				{
+					return bIsCompletedRequiredQuests;
+				}
+			}
+		}
+	
+	}
+	return bIsCompletedRequiredQuests;
+	
 }
 
 

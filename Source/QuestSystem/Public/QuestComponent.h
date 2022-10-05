@@ -25,15 +25,17 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
 	int32 CurrentQuestIndex=0;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
+	bool bHasAvtiveQuest=false;
 
 	UFUNCTION(BlueprintPure)
 	FGameplayTag GetCurrentQuestID() const;
 
 	UFUNCTION(BlueprintPure)
-	TArray<FTaskState> GetCurrentQuestTasks() const;
+	void GetCurrentQuestTasks(TArray<FTaskState>& OutTasks);
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
 	TArray<FGameplayTag> CurrentQuests;
@@ -46,10 +48,7 @@ public:
 	
 	UPROPERTY(BlueprintReadWrite,EditDefaultsOnly)
 	TSoftObjectPtr<UDataTable> QuestDataTable;
-
-	UFUNCTION(BlueprintCallable)
-	bool CompleteQuest(FGameplayTag QuestID);
-
+	
 	UFUNCTION(BlueprintCallable)
 	void TakeNewQuest(FGameplayTag QuestID);
 
@@ -57,10 +56,20 @@ public:
 	void UpdateQuestList();
 	
 	UFUNCTION(BlueprintCallable)
-	bool bIsCompletedTasks();
-	
+	bool CompleteTaskForCurrentQuest(FGameplayTag TaskID);
+
+	UFUNCTION()
+	bool CompleteQuest(FGameplayTag QuestID);
 
 	UFUNCTION(BlueprintCallable)
-	TArray<FTaskState> GetRequiredTasksForQuest(FGameplayTag QuestID) const;
+	int32 GetCurrentTaskRequirements(FGameplayTag TaskID);
 	
+	UFUNCTION(BlueprintCallable)
+	bool GetRequiredTasksForQuest(FGameplayTag QuestID, TArray<FTaskState>& OutTasks);
+
+	UFUNCTION(BlueprintCallable)
+	bool SetTaskCompletedForQuest(FGameplayTag QuestID, FGameplayTag TaskID, bool bCompleted);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsRequiredQuestsCompletedForQuest(FGameplayTag QuestID);
 };
