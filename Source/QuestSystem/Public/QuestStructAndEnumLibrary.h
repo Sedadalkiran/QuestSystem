@@ -42,13 +42,13 @@ public:
 	FGameplayTag TaskID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	ETaskType TaskType;
+	ETaskType TaskType=ETaskType::MainTask;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FGameplayTag QuestID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int RequiredAmount;
+	int RequiredAmount=1;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FText TaskDescription;
@@ -64,10 +64,10 @@ public:
 	FTaskData TaskData;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bIsCompleted;
+	bool bIsCompleted=false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int CurrentAmount;
+	int32 CurrentAmount=0;
 
 	
 };

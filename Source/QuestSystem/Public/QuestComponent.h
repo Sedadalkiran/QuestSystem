@@ -29,7 +29,7 @@ public:
 	int32 CurrentQuestIndex=0;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
-	bool bHasAvtiveQuest=false;
+	bool bHasActiveQuest=false;
 
 	UFUNCTION(BlueprintPure)
 	FGameplayTag GetCurrentQuestID() const;
@@ -58,14 +58,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool CompleteTaskForCurrentQuest(FGameplayTag TaskID);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	bool CompleteQuest(FGameplayTag QuestID);
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetCurrentTaskRequirements(FGameplayTag TaskID);
 	
 	UFUNCTION(BlueprintCallable)
-	bool GetRequiredTasksForQuest(FGameplayTag QuestID, TArray<FTaskState>& OutTasks);
+	TArray<FTaskState> GetRequiredTasksForQuest(FGameplayTag QuestID);
 
 	UFUNCTION(BlueprintCallable)
 	bool SetTaskCompletedForQuest(FGameplayTag QuestID, FGameplayTag TaskID, bool bCompleted);
