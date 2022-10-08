@@ -31,6 +31,9 @@ public:
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
 	bool bHasActiveQuest=false;
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
+	int32 ActiveTaskIndex=-1;
+
 	UFUNCTION(BlueprintPure)
 	FGameplayTag GetCurrentQuestID() const;
 
@@ -51,6 +54,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void TakeNewQuest(FGameplayTag QuestID);
+
+	UFUNCTION(BlueprintCallable)
+	FGameplayTag StartNextTask();
 
 	UFUNCTION (BlueprintCallable)
 	void UpdateQuestList();
