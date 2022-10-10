@@ -45,10 +45,7 @@ public:
 	ETaskType TaskType=ETaskType::MainTask;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FGameplayTag QuestID;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int RequiredAmount=1;
+	TMap<FGameplayTag, float> TaskRequirements;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FText TaskDescription;
@@ -67,7 +64,5 @@ public:
 	bool bIsCompleted=false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int32 CurrentAmount=0;
-
-	
+	TMap<FGameplayTag, float> CurrentRequirements;
 };

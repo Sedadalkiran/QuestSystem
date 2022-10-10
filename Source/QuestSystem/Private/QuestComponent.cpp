@@ -4,7 +4,6 @@
 #include "QuestComponent.h"
 
 #include "IPropertyTable.h"
-#include "Algo/IndexOf.h"
 
 // Sets default values for this component's properties
 UQuestComponent::UQuestComponent()
@@ -87,6 +86,13 @@ void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
 			{
 				FTaskState State;
 				State.TaskData = RequiredTask;
+
+				TArray<FGameplayTag> Keys;
+				RequiredTask.TaskRequirements.GetKeys(Keys);
+				for (const auto& Key : Keys)
+				{
+					State.CurrentRequirements.Add(Key, 0.f);
+				}
 				RequiredTasks.Add(State);
 			}
 			bHasActiveQuest = true;
@@ -163,7 +169,6 @@ bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
 		}
 	}
 
-
 	if (CurrentQuests.Remove(QuestID) > 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s questi tamamlandı sebebiii bilinmiyor"), *QuestID.ToString());
@@ -178,11 +183,11 @@ bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
 	return false;
 }
 
-int32 UQuestComponent::GetCurrentTaskRequirements(FGameplayTag TaskID)
+TMap<FGameplayTag, float> UQuestComponent::GetCurrentTaskRequirements(FGameplayTag TaskID)
 {
 	if (!QuestDataTable.LoadSynchronous())
 	{
-		return -1;
+		return {};
 	}
 	FString ContexString = GetCurrentQuestID().ToString();
 
@@ -196,11 +201,11 @@ int32 UQuestComponent::GetCurrentTaskRequirements(FGameplayTag TaskID)
 		{
 			if (Task.TaskID == TaskID)
 			{
-				return Task.RequiredAmount;
+				return Task.TaskRequirements;
 			}
 		}
 	}
-	return -1;
+	return {};
 }
 
 

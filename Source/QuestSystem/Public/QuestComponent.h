@@ -68,7 +68,7 @@ public:
 	bool CompleteQuest(FGameplayTag QuestID);
 
 	UFUNCTION(BlueprintCallable)
-	int32 GetCurrentTaskRequirements(FGameplayTag TaskID);
+	TMap<FGameplayTag, float> GetCurrentTaskRequirements(FGameplayTag TaskID);
 	
 	UFUNCTION(BlueprintCallable)
 	TArray<FTaskState> GetRequiredTasksForQuest(FGameplayTag QuestID);
