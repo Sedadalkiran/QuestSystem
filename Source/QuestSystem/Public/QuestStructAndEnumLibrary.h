@@ -33,6 +33,15 @@ enum class ETaskState:uint8
 
 };
 
+UENUM(BlueprintType)
+enum class EQuestRefreshState:uint8
+{
+	InvalidCurrentQuest,
+	QuestCompleted,
+	NextTaskStarted,
+	NoUpdate,
+};
+
 USTRUCT(BlueprintType)
 struct FTaskRequirement
 {
