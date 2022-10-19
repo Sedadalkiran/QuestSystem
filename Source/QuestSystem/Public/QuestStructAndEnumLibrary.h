@@ -34,6 +34,24 @@ enum class ETaskState:uint8
 };
 
 USTRUCT(BlueprintType)
+struct FTaskRequirement
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FGameplayTag RequirementTag;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bIsCompleted=false;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bIsCountRequirement=false;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float RequiredCount=0;
+};
+
+USTRUCT(BlueprintType)
 struct FTaskData
 {
 	GENERATED_BODY()
@@ -45,24 +63,15 @@ public:
 	ETaskType TaskType=ETaskType::MainTask;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TMap<FGameplayTag, float> TaskRequirements;
+	TArray<FTaskRequirement> TaskRequirements;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FText TaskDescription;
+
+	bool IsAllRequirementsCompleted() const;
 	
 };
 
-USTRUCT(BlueprintType)
-struct FTaskState
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FTaskData TaskData;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool bIsCompleted=false;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TMap<FGameplayTag, float> CurrentRequirements;
-};
+

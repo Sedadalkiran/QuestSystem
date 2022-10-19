@@ -33,34 +33,20 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
-FGameplayTag UQuestComponent::GetCurrentQuestID() const
-{
-	if (!CurrentQuests.IsValidIndex(CurrentQuestIndex))
-	{
-		return FGameplayTag::EmptyTag;
-	}
-	return CurrentQuests[CurrentQuestIndex];
-}
-
-void UQuestComponent::GetCurrentQuestTasks(TArray<FTaskState>& OutTasks)
-{
-	OutTasks = GetRequiredTasksForQuest(GetCurrentQuestID());
-}
-
 
 void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
 {
 	if (bHasActiveQuest)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s questi alınamadı aktif quest : %s"), *QuestID.ToString(),
-		       *GetCurrentQuestID().ToString());
+		       *CurrentQuest.ToString());
 		return;
 	}
 
 	if (FinishedQuests.Contains(QuestID))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s questi alınamadı, bitmiş questler içerisinde yer alıyor"),
-		       *QuestID.ToString(), *GetCurrentQuestID().ToString());
+		       *QuestID.ToString(), *CurrentQuest.ToString());
 		return;
 	}
 
@@ -78,23 +64,10 @@ void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
 		if (IsRequiredQuestsCompletedForQuest(QuestID))
 		{
 			//FGameplayTag::RequestGameplayTag(QuestID.GetTagName());
-			CurrentQuestIndex = CurrentQuests.AddUnique(Row->QuestID);
+			CurrentQuest = QuestID;
 
-			TArray<FTaskState>& RequiredTasks = CurrentQuestTasks.FindOrAdd(Row->QuestID);
-			RequiredTasks.Empty();
-			for (const auto& RequiredTask : Row->RequiredTasks)
-			{
-				FTaskState State;
-				State.TaskData = RequiredTask;
-
-				TArray<FGameplayTag> Keys;
-				RequiredTask.TaskRequirements.GetKeys(Keys);
-				for (const auto& Key : Keys)
-				{
-					State.CurrentRequirements.Add(Key, 0.f);
-				}
-				RequiredTasks.Add(State);
-			}
+			CurrentQuestTasks=Row->RequiredTasks;
+			
 			bHasActiveQuest = true;
 			FGameplayTag Tagim = StartNextTask();
 		}
@@ -111,19 +84,18 @@ void UQuestComponent::TakeNewQuest(FGameplayTag QuestID)
 
 FGameplayTag UQuestComponent::StartNextTask()
 {
-	TArray<FTaskState> TaskList = GetRequiredTasksForQuest(GetCurrentQuestID());
-	if (!TaskList.IsEmpty() && bHasActiveQuest)
+	if (!CurrentQuestTasks.IsEmpty() && bHasActiveQuest)
 	{
 		if (ActiveTaskIndex + 1 > 0)
 		{
 			for (int32 i = 0; i <= ActiveTaskIndex; i++)
 			{
-				if (TaskList.IsValidIndex(i))
+				if (CurrentQuestTasks.IsValidIndex(i))
 				{
 					UE_LOG(LogTemp, Warning, TEXT("%s taski %s"),
-					       *TaskList[i].TaskData.TaskID.ToString(),
-					       TaskList[i].bIsCompleted ? TEXT("true") : TEXT("false"));
-					if (TaskList[i].bIsCompleted == false)
+					       *CurrentQuestTasks[i].TaskID.ToString(),
+					       CurrentQuestTasks[i].IsAllRequirementsCompleted()? TEXT("true") : TEXT("false"));
+					if (CurrentQuestTasks[i].IsAllRequirementsCompleted() == false)
 					{
 						return FGameplayTag::EmptyTag;
 					}
@@ -141,7 +113,7 @@ FGameplayTag UQuestComponent::StartNextTask()
 			ActiveTaskIndex++;
 		}
 
-		return TaskList[ActiveTaskIndex].TaskData.TaskID;
+		return CurrentQuestTasks[ActiveTaskIndex].TaskID;
 	}
 	return FGameplayTag::EmptyTag;
 }
@@ -153,29 +125,28 @@ void UQuestComponent::UpdateQuestList()
 
 bool UQuestComponent::CompleteTaskForCurrentQuest(FGameplayTag TaskID)
 {
-	return SetTaskCompletedForQuest(GetCurrentQuestID(), TaskID, true);;
+	return SetTaskCompletedForQuest(CurrentQuest, TaskID, true);;
 }
 
 bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
 {
-	TArray<FTaskState> TaskStates = GetRequiredTasksForQuest(QuestID);
-	for (const auto& TaskState : TaskStates)
+	for (const auto& TaskState : CurrentQuestTasks)
 	{
-		if (!TaskState.bIsCompleted)
+		if (!TaskState.IsAllRequirementsCompleted())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("%s questi için gereken %s taskı tamamlanmadı"), *QuestID.ToString(),
-			       *TaskState.TaskData.TaskID.ToString());
+			       *TaskState.TaskID.ToString());
 			return false;
 		}
 	}
 
-	if (CurrentQuests.Remove(QuestID) > 0)
+	if (CurrentQuest.IsValid())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s questi tamamlandı sebebiii bilinmiyor"), *QuestID.ToString());
 		bHasActiveQuest = false;
 		FinishedQuests.AddUnique(QuestID);
 		ActiveTaskIndex = -1;
-		CurrentQuests.Empty();
+		CurrentQuest = FGameplayTag::EmptyTag;
 		return true;
 	}
 	UE_LOG(LogTemp, Warning, TEXT("%s questi için şuanki questler arasında değilll quest tamamlanamadı"),
@@ -183,16 +154,16 @@ bool UQuestComponent::CompleteQuest(FGameplayTag QuestID)
 	return false;
 }
 
-TMap<FGameplayTag, float> UQuestComponent::GetCurrentTaskRequirements(FGameplayTag TaskID)
+TArray<FTaskRequirement> UQuestComponent::GetCurrentTaskRequirements(FGameplayTag TaskID)
 {
 	if (!QuestDataTable.LoadSynchronous())
 	{
 		return {};
 	}
-	FString ContexString = GetCurrentQuestID().ToString();
+	FString ContexString = CurrentQuest.ToString();
 
 
-	FQuestInfo* Row = QuestDataTable.Get()->FindRow<FQuestInfo>(GetCurrentQuestID().GetTagName(), ContexString);
+	FQuestInfo* Row = QuestDataTable.Get()->FindRow<FQuestInfo>(CurrentQuest.GetTagName(), ContexString);
 
 	if (Row)
 	{
@@ -209,37 +180,30 @@ TMap<FGameplayTag, float> UQuestComponent::GetCurrentTaskRequirements(FGameplayT
 }
 
 
-TArray<FTaskState> UQuestComponent::GetRequiredTasksForQuest(FGameplayTag QuestID)
-{
-	TArray<FTaskState>* TaskStates = CurrentQuestTasks.Find(QuestID);
-	if (TaskStates)
-	{
-		return *TaskStates;
-	}
-	return TArray<FTaskState>{};
-}
-
 bool UQuestComponent::SetTaskCompletedForQuest(FGameplayTag QuestID, FGameplayTag TaskID, bool bCompleted)
 {
-	TArray<FTaskState>* TaskStates = CurrentQuestTasks.Find(QuestID);
-	if (TaskStates)
+	if (CurrentQuest != QuestID)
 	{
-		for (FTaskState& TaskState : *TaskStates)
+		return false;
+	}
+	if(CurrentQuestTasks[ActiveTaskIndex].TaskID==TaskID)
+	{
+		for (FTaskData& TaskState : CurrentQuestTasks)
 		{
-			if (TaskState.TaskData.TaskID == TaskID && TaskState.bIsCompleted == false)
+			if (TaskState.TaskID == TaskID && TaskState.IsAllRequirementsCompleted() == false)
 			{
-				TArray<FTaskState> ActiveTaskStates = GetRequiredTasksForQuest(QuestID);
-				FTaskState ActiveTaskState = ActiveTaskStates[ActiveTaskIndex];
-				if (ActiveTaskState.TaskData.TaskID == TaskID)
+				//TODO: Buraya sonra bak 
+				for(auto& Requirement: TaskState.TaskRequirements)
 				{
-					TaskState.bIsCompleted = bCompleted;
-					if(ActiveTaskIndex<TaskStates->Num()-1)
-					{
-						StartNextTask();
-					}
-					
-					return true;
+					Requirement.bIsCompleted = bCompleted;
 				}
+				
+				if (ActiveTaskIndex < CurrentQuestTasks.Num() - 1)
+				{
+					StartNextTask();
+				}
+
+				return true;
 			}
 		}
 	}
@@ -277,4 +241,42 @@ bool UQuestComponent::IsRequiredQuestsCompletedForQuest(FGameplayTag QuestID)
 		}
 	}
 	return true;
+}
+
+bool UQuestComponent::AddCompletedActionTag(FGameplayTag CompletedActionTag)
+{
+	if (HasMatchingGameplayTag(CompletedActionTag))
+	{
+		return false;
+	}
+	CompletedActions.AddTag(CompletedActionTag);
+	for(auto& Requirement:CurrentQuestTasks[ActiveTaskIndex].TaskRequirements)
+	{
+		if(Requirement.bIsCompleted != false && Requirement.bIsCountRequirement == false && Requirement.RequirementTag == CompletedActionTag)
+		{
+			Requirement.bIsCompleted=true;
+		}
+	}
+	
+	return true;
+}
+
+void UQuestComponent::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	TagContainer = CompletedActions;
+}
+
+bool UQuestComponent::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+{
+	return CompletedActions.HasTag(TagToCheck);
+}
+
+bool UQuestComponent::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	return CompletedActions.HasAll(TagContainer);
+}
+
+bool UQuestComponent::HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
+{
+	return CompletedActions.HasAny(TagContainer);
 }

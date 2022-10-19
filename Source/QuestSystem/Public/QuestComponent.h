@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "FQuestInfo.h"
+#include "GameplayTagAssetInterface.h"
 #include "Components/ActorComponent.h"
 #include "QuestComponent.generated.h"
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class QUESTSYSTEM_API UQuestComponent : public UActorComponent
+class QUESTSYSTEM_API UQuestComponent : public UActorComponent,public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -25,29 +26,25 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
-	int32 CurrentQuestIndex=0;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
 	bool bHasActiveQuest=false;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
 	int32 ActiveTaskIndex=-1;
-
-	UFUNCTION(BlueprintPure)
-	FGameplayTag GetCurrentQuestID() const;
-
-	UFUNCTION(BlueprintPure)
-	void GetCurrentQuestTasks(TArray<FTaskState>& OutTasks);
+	
+	
+	
+	
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
-	TArray<FGameplayTag> CurrentQuests;
+	FGameplayTag CurrentQuest;
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
 	TArray<FGameplayTag> FinishedQuests;
 
 	//Key: QuestID Value:Task Array
-	TMap<FGameplayTag,TArray<FTaskState>> CurrentQuestTasks;
+	TArray<FTaskData> CurrentQuestTasks;
 	
 	UPROPERTY(BlueprintReadWrite,EditDefaultsOnly)
 	TSoftObjectPtr<UDataTable> QuestDataTable;
@@ -68,14 +65,30 @@ public:
 	bool CompleteQuest(FGameplayTag QuestID);
 
 	UFUNCTION(BlueprintCallable)
-	TMap<FGameplayTag, float> GetCurrentTaskRequirements(FGameplayTag TaskID);
+	TArray<FTaskRequirement> GetCurrentTaskRequirements(FGameplayTag TaskID);
 	
-	UFUNCTION(BlueprintCallable)
-	TArray<FTaskState> GetRequiredTasksForQuest(FGameplayTag QuestID);
 
 	UFUNCTION(BlueprintCallable)
 	bool SetTaskCompletedForQuest(FGameplayTag QuestID, FGameplayTag TaskID, bool bCompleted);
 
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
+	FGameplayTagContainer CompletedActions;
+	
 	UFUNCTION(BlueprintCallable)
 	bool IsRequiredQuestsCompletedForQuest(FGameplayTag QuestID);
+
+	UFUNCTION(BlueprintCallable)
+	bool AddCompletedActionTag(FGameplayTag CompletedActionTag);
+
+	//START IGameplayTagAssetInterface
+	
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	
+	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
+	
+	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+	
+	virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
+
+	//END IGameplayTagAssetInterface
 };
